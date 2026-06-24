@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — personiq docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f12; --text: #e8eaf0; --muted: #7a8090; --accent: #6c8aff;
+      --border: #232730; --bg2: #13161b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; text-align: center; padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 420px; }
+    .code {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 5rem; font-weight: 500;
+      color: var(--accent); opacity: .18;
+      line-height: 1; margin-bottom: 24px;
+    }
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem; font-weight: 800;
+      letter-spacing: -.02em; margin-bottom: 10px;
+    }
+    p { color: var(--muted); font-size: .95rem; margin-bottom: 28px; line-height: 1.6; }
+    a {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--accent); color: #fff;
+      font-size: .875rem; font-weight: 500;
+      padding: 9px 20px; border-radius: 6px;
+      text-decoration: none; transition: background .15s;
+    }
+    a:hover { background: #7d9bff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="code">404</div>
+    <h1>Page not found</h1>
+    <p>The page you're looking for doesn't exist or has been moved.<br />Head back to the docs.</p>
+    <a href="/">← Back to docs</a>
+  </div>
+</body>
+</html>

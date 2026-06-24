@@ -1,0 +1,9 @@
+# GitHub Pages configuration
+# Serves the site as plain HTML — no Jekyll processing needed.
+# Place this repo's docs/ folder as the GitHub Pages source.
+
+title: personiq docs
+description: Personalization memory connector for LangChain and LangGraph
+
+# Disable Jekyll so index.html is served as-is
+plugins: []

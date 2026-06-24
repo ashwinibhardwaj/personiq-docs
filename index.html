@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>personiq - Personalization memory for LangChain & LangGraph</title>
+<meta name="description" content="One adapter. Any LLM. Automatically extracts, stores, and injects user memory into your AI applications."/>
+<link rel="icon" type="image/png" href="assets/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<link rel="shortcut icon" href="assets/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
+<link rel="manifest" href="assets/site.webmanifest" />
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0F1117;
+  --bg-raised: #161B25;
+  --bg-hover: #1C2333;
+  --border: #1E2A3A;
+  --border-subtle: #1A2436;
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #4B5B6E;
+  --text-disabled: #334155;
+  --accent: #3B82F6;
+  --accent-hover: #60A5FA;
+  --accent-subtle: rgba(59,130,246,.1);
+  --accent-border: rgba(59,130,246,.25);
+  --green: #34D399;
+  --green-subtle: rgba(52,211,153,.1);
+  --amber: #F59E0B;
+  --red: #F87171;
+  --code-bg: #0D1117;
+  --code-border: #1A2436;
+  --sidebar-w: 240px;
+  --nav-h: 56px;
+  --sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text-primary);font-family:var(--sans);font-size:14.5px;line-height:1.7;-webkit-font-smoothing:antialiased;}
+a{color:var(--accent);text-decoration:none;}
+a:hover{color:var(--accent-hover);text-decoration:underline;}
+
+/* ── Nav ── */
+.topnav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:var(--nav-h);
+  display:flex;align-items:center;
+  padding:0 24px;
+  gap:0;
+  background:rgba(15,17,23,.9);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{
+  display:flex;align-items:center;gap:9px;
+  font-size:.95rem;font-weight:600;letter-spacing:-.02em;
+  color:var(--text-primary);
+  margin-right:auto;
+}
+.nav-logo-mark{
+  width:26px;height:26px;
+  background:var(--accent);
+  border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.nav-logo-mark svg{display:block;}
+.nav-right{display:flex;align-items:center;gap:4px;}
+.nav-link{
+  font-size:.82rem;color:var(--text-secondary);
+  padding:5px 11px;border-radius:5px;
+  transition:color .12s,background .12s;
+}
+.nav-link:hover{color:var(--text-primary);background:var(--bg-raised);text-decoration:none;}
+.nav-btn-gh{
+  display:flex;align-items:center;gap:6px;
+  font-size:.8rem;font-weight:500;
+  color:var(--text-secondary);
+  background:var(--bg-raised);
+  border:1px solid var(--border);
+  padding:5px 12px;border-radius:5px;
+  margin-left:6px;
+  transition:color .12s,border-color .12s;
+}
+.nav-btn-gh:hover{color:var(--text-primary);border-color:var(--border-subtle);text-decoration:none;}
+.hamburger{display:none;background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:6px;margin-left:6px;}
+
+/* ── Layout ── */
+.layout{display:flex;padding-top:var(--nav-h);min-height:100vh;}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  position:sticky;top:var(--nav-h);
+  height:calc(100vh - var(--nav-h));
+  overflow-y:auto;
+  border-right:1px solid var(--border);
+  padding:20px 0 48px;
+}
+.sidebar::-webkit-scrollbar{width:3px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.sg{margin-bottom:22px;}
+.sg-label{
+  font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-muted);padding:0 16px;margin-bottom:3px;
+}
+.sl{
+  display:block;font-size:.825rem;color:var(--text-secondary);
+  padding:4px 16px;border-left:2px solid transparent;
+  transition:color .1s,border-color .1s,background .1s;
+}
+.sl:hover{color:var(--text-primary);background:var(--bg-raised);text-decoration:none;}
+.sl.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-subtle);}
+.sl-badge{
+  font-size:.62rem;font-family:var(--mono);
+  background:var(--bg-raised);color:var(--text-muted);
+  border:1px solid var(--border);
+  border-radius:3px;padding:0 4px;margin-left:5px;vertical-align:middle;
+}
+
+/* ── Main ── */
+.main{flex:1;min-width:0;padding:56px 64px 100px;max-width:820px;}
+
+/* ── Hero ── */
+.hero{padding-bottom:56px;border-bottom:1px solid var(--border);margin-bottom:64px;}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:.75rem;font-family:var(--mono);
+  color:var(--text-muted);margin-bottom:22px;
+}
+.hero-eyebrow-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 6px var(--green);
+}
+.hero-eyebrow-chip{
+  background:var(--green-subtle);color:var(--green);
+  border:1px solid rgba(52,211,153,.2);
+  border-radius:4px;padding:1px 7px;font-size:.7rem;
+}
+h1{
+  font-size:2.5rem;font-weight:600;line-height:1.15;
+  letter-spacing:-.035em;color:var(--text-primary);
+  margin-bottom:16px;
+}
+h1 span{color:var(--text-secondary);font-weight:300;}
+.hero-desc{
+  font-size:.975rem;color:var(--text-secondary);
+  max-width:540px;line-height:1.7;margin-bottom:28px;
+}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:.84rem;font-weight:500;
+  padding:8px 18px;border-radius:6px;
+  transition:all .13s;cursor:pointer;letter-spacing:-.01em;
+}
+.btn-primary{background:var(--accent);color:#fff;border:1px solid var(--accent);}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover);text-decoration:none;color:#fff;}
+.btn-ghost{background:var(--bg-raised);color:var(--text-secondary);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text-primary);border-color:var(--text-muted);text-decoration:none;}
+
+/* ── Sections ── */
+.section{margin-bottom:72px;scroll-margin-top:calc(var(--nav-h) + 24px);}
+
+/* ── Headings ── */
+h2{font-size:1.45rem;font-weight:600;letter-spacing:-.025em;color:var(--text-primary);margin-bottom:14px;scroll-margin-top:calc(var(--nav-h) + 24px);}
+h3{font-size:.9rem;font-weight:600;color:var(--text-primary);margin:28px 0 10px;letter-spacing:-.01em;}
+p{margin-bottom:12px;color:var(--text-secondary);}
+strong{color:var(--text-primary);font-weight:500;}
+em{font-style:italic;}
+
+/* ── Inline code ── */
+code{
+  font-family:var(--mono);font-size:.78em;
+  background:var(--bg-raised);
+  border:1px solid var(--border);
+  border-radius:4px;padding:1px 5px;
+  color:#94A3B8;
+}
+
+/* ── Code blocks ── */
+.cw{position:relative;margin:16px 0;}
+pre{
+  background:var(--code-bg);
+  border:1px solid var(--code-border);
+  border-radius:8px;
+  padding:0;
+  overflow:hidden;
+}
+.pre-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 16px;
+  border-bottom:1px solid var(--code-border);
+  background:rgba(255,255,255,.02);
+}
+.pre-lang{font-family:var(--mono);font-size:.68rem;color:var(--text-muted);letter-spacing:.05em;text-transform:uppercase;}
+.pre-copy{
+  font-family:var(--mono);font-size:.68rem;
+  color:var(--text-muted);
+  background:none;border:1px solid var(--border);
+  padding:3px 8px;border-radius:4px;cursor:pointer;
+  transition:color .12s,border-color .12s;
+}
+.pre-copy:hover{color:var(--text-primary);border-color:var(--text-muted);}
+.pre-copy.ok{color:var(--green);border-color:rgba(52,211,153,.3);}
+pre code{
+  display:block;
+  font-family:var(--mono);font-size:.8rem;
+  line-height:1.65;padding:16px 20px;
+  background:none;border:none;border-radius:0;
+  color:#CBD5E1;
+  white-space:pre;
+}
+
+/* syntax */
+.kw{color:#7C86C8;}
+.st{color:#7EC8A0;}
+.cm{color:#3B4B5C;font-style:italic;}
+.fn{color:#5BA8D4;}
+.tp{color:#D4A76A;}
+.op{color:#778CA3;}
+.nu{color:#D4896A;}
+.at{color:#94B3D4;}
+.df{color:#CBD5E1;}
+
+/* ── Callouts ── */
+.callout{
+  display:flex;gap:12px;
+  padding:13px 16px;border-radius:6px;
+  margin:16px 0;font-size:.875rem;
+  border:1px solid;
+}
+.callout-icon{flex-shrink:0;margin-top:1px;font-size:.9rem;}
+.callout-body{color:var(--text-secondary);}
+.callout-body strong{display:block;margin-bottom:2px;}
+.callout.info{background:var(--accent-subtle);border-color:var(--accent-border);}
+.callout.info .callout-body strong{color:var(--accent);}
+.callout.tip{background:var(--green-subtle);border-color:rgba(52,211,153,.2);}
+.callout.tip .callout-body strong{color:var(--green);}
+.callout.warn{background:rgba(245,158,11,.07);border-color:rgba(245,158,11,.2);}
+.callout.warn .callout-body strong{color:var(--amber);}
+
+/* ── Tabs ── */
+.tabs{margin:18px 0;}
+.tab-bar{display:flex;border-bottom:1px solid var(--border);gap:0;}
+.tab-btn{
+  font-size:.8rem;font-family:var(--mono);
+  color:var(--text-muted);background:none;border:none;
+  border-bottom:2px solid transparent;
+  padding:7px 14px;cursor:pointer;
+  margin-bottom:-1px;
+  transition:color .1s,border-color .1s;
+}
+.tab-btn:hover{color:var(--text-secondary);}
+.tab-btn.active{color:var(--text-primary);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ── Tables ── */
+.tw{overflow-x:auto;margin:16px 0;}
+table{width:100%;border-collapse:collapse;font-size:.855rem;}
+thead tr{border-bottom:1px solid var(--border);}
+th{
+  text-align:left;font-size:.68rem;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;
+  color:var(--text-muted);padding:9px 14px;
+}
+td{padding:10px 14px;border-bottom:1px solid var(--border-subtle);color:var(--text-secondary);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+td code{font-size:.75rem;}
+td strong{color:var(--text-primary);}
+
+/* ── Method cards ── */
+.mc{
+  background:var(--bg-raised);
+  border:1px solid var(--border);
+  border-radius:8px;
+  margin:10px 0;overflow:hidden;
+}
+.mc-sig{
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:.8rem;
+  color:var(--text-primary);line-height:1.5;
+  background:rgba(255,255,255,.015);
+}
+.mc-body{padding:14px 18px;}
+.mc-desc{font-size:.875rem;color:var(--text-secondary);margin-bottom:0;}
+.mc-params{margin-top:12px;border-top:1px solid var(--border-subtle);padding-top:12px;}
+.param-row{display:flex;gap:14px;padding:5px 0;font-size:.84rem;}
+.param-row+.param-row{border-top:1px solid var(--border-subtle);}
+.param-name{font-family:var(--mono);font-size:.75rem;color:#94B3D4;flex-shrink:0;width:148px;padding-top:1px;}
+.param-desc{color:var(--text-secondary);}
+
+/* ── Steps ── */
+.steps{list-style:none;counter-reset:step;}
+.steps>li{counter-increment:step;padding:0 0 32px 42px;position:relative;}
+.steps>li::before{
+  content:counter(step);
+  position:absolute;left:0;top:2px;
+  width:26px;height:26px;
+  background:var(--bg-raised);
+  border:1px solid var(--border);
+  border-radius:50%;
+  font-family:var(--mono);font-size:.72rem;
+  color:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+}
+.steps>li:not(:last-child)::after{
+  content:'';position:absolute;left:12px;top:30px;bottom:0;
+  width:1px;background:var(--border);
+}
+.steps h3{margin-top:0;}
+
+/* ── Pipeline grid ── */
+.pipeline{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--border);border:1px solid var(--border);
+  border-radius:8px;overflow:hidden;margin:20px 0;
+}
+.pipe-cell{background:var(--bg-raised);padding:18px 16px;}
+.pipe-n{font-family:var(--mono);font-size:.65rem;color:var(--text-muted);margin-bottom:8px;}
+.pipe-title{font-size:.875rem;font-weight:600;color:var(--text-primary);margin-bottom:6px;}
+.pipe-desc{font-size:.8rem;color:var(--text-secondary);line-height:1.55;}
+
+/* ── Community cards ── */
+.cgrid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;margin:20px 0;
+}
+.ccard{background:var(--bg-raised);padding:20px;transition:background .12s;}
+.ccard:hover{background:var(--bg-hover);}
+.ccard-head{display:flex;align-items:center;gap:8px;font-size:.875rem;font-weight:500;color:var(--text-primary);margin-bottom:7px;}
+.ccard p{font-size:.82rem;color:var(--text-muted);margin-bottom:10px;}
+.ccard a{font-size:.82rem;}
+
+/* ── HR ── */
+hr{border:none;border-top:1px solid var(--border);margin:40px 0;}
+
+/* ── Footer ── */
+footer{
+  border-top:1px solid var(--border);
+  padding:28px 64px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  font-size:.8rem;color:var(--text-muted);
+}
+footer a{color:var(--text-muted);}
+footer a:hover{color:var(--text-secondary);}
+
+/* ── Mobile ── */
+@media(max-width:880px){
+  .sidebar{display:none;}
+  .sidebar.open{display:block;position:fixed;top:var(--nav-h);left:0;bottom:0;z-index:100;overflow-y:auto;background:var(--bg);width:260px;}
+  .main{padding:40px 24px 80px;}
+  h1{font-size:1.9rem;}
+  .pipeline{grid-template-columns:1fr 1fr;}
+  footer{padding:24px;}
+  .hamburger{display:flex;}
+  .nav-link{display:none;}
+}
+@media(max-width:480px){.pipeline{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="#" class="nav-logo">
+    <span class="nav-logo-mark">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="7" r="5" stroke="white" stroke-width="1.5"/>
+        <circle cx="7" cy="7" r="2" fill="white"/>
+      </svg>
+    </span>
+    personiq
+  </a>
+  <div class="nav-right">
+    <a href="#quickstart" class="nav-link">Quickstart</a>
+    <a href="#api" class="nav-link">API</a>
+    <a href="#community" class="nav-link">Community</a>
+    <a href="https://github.com/ashwinibhardwaj/personiq" class="nav-btn-gh" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      GitHub
+    </a>
+  </div>
+  <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+  </button>
+</nav>
+
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+  <div class="sg">
+    <div class="sg-label">Introduction</div>
+    <a class="sl active" href="#overview">Overview</a>
+    <a class="sl" href="#how-it-works">How it works</a>
+    <a class="sl" href="#install">Installation</a>
+  </div>
+  <div class="sg">
+    <div class="sg-label">Getting Started</div>
+    <a class="sl" href="#quickstart">Quickstart</a>
+    <a class="sl" href="#integration">Integration styles</a>
+    <a class="sl" href="#context-modes">Context modes</a>
+  </div>
+  <div class="sg">
+    <div class="sg-label">Frameworks</div>
+    <a class="sl" href="#langgraph">LangGraph</a>
+    <a class="sl" href="#langchain">LangChain / LCEL</a>
+    <a class="sl" href="#fastapi">FastAPI</a>
+    <a class="sl" href="#openai">OpenAI SDK</a>
+    <a class="sl" href="#ollama">Ollama</a>
+  </div>
+  <div class="sg">
+    <div class="sg-label">Reference</div>
+    <a class="sl" href="#api">PersoniqAdapter <span class="sl-badge">class</span></a>
+    <a class="sl" href="#config">PersoniqConfig <span class="sl-badge">class</span></a>
+    <a class="sl" href="#models">Data models</a>
+    <a class="sl" href="#env">Env variables</a>
+  </div>
+  <div class="sg">
+    <div class="sg-label">Guides</div>
+    <a class="sl" href="#memory-mgmt">Memory management</a>
+    <a class="sl" href="#providers">LLM providers</a>
+    <a class="sl" href="#alongside">Other memory systems</a>
+  </div>
+  <div class="sg">
+    <div class="sg-label">Community</div>
+    <a class="sl" href="#community">Community &amp; links</a>
+    <a class="sl" href="#contributing">Contributing</a>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- ── Hero ── -->
+<section class="section hero" id="overview">
+  <div class="hero-eyebrow">
+    <span class="hero-eyebrow-chip">v0.2.0</span>
+    Python 3.10+ &nbsp;·&nbsp; MIT License
+  </div>
+  <h1>Personalization memory<br/><span>for every AI app.</span></h1>
+  <p class="hero-desc">personiq extracts what matters about each user, stores it locally, and silently prepends it to every future conversation - one adapter, any LLM, two lines of code.</p>
+  <div class="hero-actions">
+    <a href="#quickstart" class="btn btn-primary">Get started →</a>
+    <a href="https://github.com/ashwinibhardwaj/personiq" class="btn btn-ghost" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      View on GitHub
+    </a>
+  </div>
+</section>
+
+<!-- ── How it works ── -->
+<section class="section" id="how-it-works">
+  <h2>How it works</h2>
+  <p>A four-stage pipeline runs transparently on every conversation, alongside your existing LLM setup.</p>
+  <div class="pipeline">
+    <div class="pipe-cell"><div class="pipe-n">01</div><div class="pipe-title">Extract</div><div class="pipe-desc">Your LLM reads the conversation and identifies durable facts skills, goals, preferences, style.</div></div>
+    <div class="pipe-cell"><div class="pipe-n">02</div><div class="pipe-title">Store</div><div class="pipe-desc">Facts persist in a local SQLite database with vector embeddings and BM25 indexes.</div></div>
+    <div class="pipe-cell"><div class="pipe-n">03</div><div class="pipe-title">Retrieve</div><div class="pipe-desc">Hybrid search fuses cosine similarity, BM25 keyword scoring, and recency decay via RRF.</div></div>
+    <div class="pipe-cell"><div class="pipe-n">04</div><div class="pipe-title">Inject</div><div class="pipe-desc">Retrieved context is prepended to your system prompt before each LLM call.</div></div>
+  </div>
+</section>
+
+<!-- ── Install ── -->
+<section class="section" id="install">
+  <h2>Installation</h2>
+  <p>Install the base package together with your LLM provider in one step.</p>
+  <div class="cw">
+    <pre><div class="pre-header"><span class="pre-lang">bash</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="cm"># pick one provider</span>
+pip install personiq[groq]        <span class="cm"># Groq llama, gemma, mixtral</span>
+pip install personiq[openai]      <span class="cm"># OpenAI</span>
+pip install personiq[anthropic]   <span class="cm"># Anthropic Claude</span>
+pip install personiq[ollama]      <span class="cm"># local, no API key</span>
+pip install personiq[mistral]     <span class="cm"># Mistral</span>
+pip install personiq[all]         <span class="cm"># Groq + OpenAI + Anthropic</span></code></pre>
+  </div>
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <div class="callout-body"><strong>No external database</strong> personiq stores everything in a local SQLite file. No Redis, no Postgres, no cloud dependencies beyond your LLM provider.</div>
+  </div>
+</section>
+
+<!-- ── Quickstart ── -->
+<section class="section" id="quickstart">
+  <h2>Quickstart</h2>
+  <ol class="steps">
+    <li>
+      <h3>Install</h3>
+      <div class="cw"><pre><div class="pre-header"><span class="pre-lang">bash</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code>pip install personiq[groq]</code></pre></div>
+    </li>
+    <li>
+      <h3>Create the adapter</h3>
+      <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="kw">from</span> <span class="df">langchain_groq</span> <span class="kw">import</span> <span class="tp">ChatGroq</span>
+<span class="kw">from</span> <span class="df">personiq</span> <span class="kw">import</span> <span class="tp">PersoniqAdapter</span>
+
+<span class="df">piq</span> <span class="op">=</span> <span class="tp">PersoniqAdapter</span>(<span class="at">llm</span><span class="op">=</span><span class="tp">ChatGroq</span>(<span class="at">model</span><span class="op">=</span><span class="st">"llama-3.1-8b-instant"</span>))</code></pre></div>
+    </li>
+    <li>
+      <h3>Add to your conversation loop</h3>
+      <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="kw">from</span> <span class="df">langchain_core.messages</span> <span class="kw">import</span> <span class="tp">HumanMessage</span>, <span class="tp">SystemMessage</span>
+
+<span class="kw">async def</span> <span class="fn">chat</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">message</span><span class="op">:</span> <span class="tp">str</span>):
+    <span class="cm"># retrieve what we know about this user</span>
+    <span class="df">ctx</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">persona</span>(<span class="df">user_id</span>, <span class="df">message</span>)
+    <span class="df">system</span> <span class="op">=</span> <span class="st">f"</span><span class="df">{ctx}</span><span class="st">\nYou are a helpful assistant."</span> <span class="kw">if</span> <span class="df">ctx</span> <span class="kw">else</span> <span class="st">"You are a helpful assistant."</span>
+
+    <span class="df">msgs</span> <span class="op">=</span> [<span class="tp">SystemMessage</span>(<span class="at">content</span><span class="op">=</span><span class="df">system</span>), <span class="tp">HumanMessage</span>(<span class="at">content</span><span class="op">=</span><span class="df">message</span>)]
+    <span class="df">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">piq</span>.<span class="df">_llm</span>.<span class="fn">ainvoke</span>(<span class="df">msgs</span>)
+
+    <span class="cm"># extract and store new memories (fire-and-forget)</span>
+    <span class="kw">await</span> <span class="df">piq</span>.<span class="fn">learn</span>(<span class="df">user_id</span>, <span class="df">msgs</span> <span class="op">+</span> [<span class="df">response</span>])
+    <span class="kw">return</span> <span class="df">response</span>.<span class="df">content</span></code></pre></div>
+    </li>
+  </ol>
+  <p>After the first conversation, every subsequent call will include what personiq learned about that user.</p>
+</section>
+
+<!-- ── Integration styles ── -->
+<section class="section" id="integration">
+  <h2>Integration styles</h2>
+  <p>Four patterns from the same adapter. Choose based on your architecture.</p>
+  <div class="tabs">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="tab(this,'t-lg')">LangGraph nodes</button>
+      <button class="tab-btn" onclick="tab(this,'t-ctx')">Direct context</button>
+      <button class="tab-btn" onclick="tab(this,'t-inj')">Message inject</button>
+      <button class="tab-btn" onclick="tab(this,'t-mem')">Memory mgmt</button>
+    </div>
+    <div class="tab-panel active" id="t-lg">
+      <div class="callout tip" style="margin-top:14px"><span class="callout-icon">✦</span><div class="callout-body"><strong>Recommended for LangGraph</strong> Two nodes, zero boilerplate.</div></div>
+      <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="df">builder</span>.<span class="fn">add_node</span>(<span class="st">"personiq_load"</span>, <span class="df">piq</span>.<span class="df">load_node</span>)  <span class="cm"># before chat</span>
+<span class="df">builder</span>.<span class="fn">add_node</span>(<span class="st">"personiq_save"</span>, <span class="df">piq</span>.<span class="df">save_node</span>)  <span class="cm"># after chat</span>
+<span class="df">builder</span>.<span class="fn">add_edge</span>(<span class="st">"personiq_load"</span>, <span class="st">"chat"</span>)
+<span class="df">builder</span>.<span class="fn">add_edge</span>(<span class="st">"chat"</span>, <span class="st">"personiq_save"</span>)
+
+<span class="cm"># In your chat node, read state["memory_context"]:</span>
+<span class="kw">async def</span> <span class="fn">chat</span>(<span class="df">state</span><span class="op">:</span> <span class="tp">PersoniqState</span>):
+    <span class="df">ctx</span> <span class="op">=</span> <span class="df">state</span>.<span class="fn">get</span>(<span class="st">"memory_context"</span>, <span class="st">""</span>)
+    <span class="df">system</span> <span class="op">=</span> <span class="st">f"</span><span class="df">{ctx}</span><span class="st">\nYou are a helpful assistant."</span> <span class="kw">if</span> <span class="df">ctx</span> <span class="kw">else</span> <span class="st">"You are a helpful assistant."</span>
+    <span class="df">msgs</span> <span class="op">=</span> [<span class="tp">SystemMessage</span>(<span class="at">content</span><span class="op">=</span><span class="df">system</span>)] <span class="op">+</span> <span class="fn">list</span>(<span class="df">state</span>[<span class="st">"messages"</span>])
+    <span class="df">resp</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">llm</span>.<span class="fn">ainvoke</span>(<span class="df">msgs</span>)
+    <span class="kw">return</span> {<span class="st">"messages"</span><span class="op">:</span> [<span class="df">resp</span>]}</code></pre></div>
+    </div>
+    <div class="tab-panel" id="t-ctx">
+      <div class="callout info" style="margin-top:14px"><span class="callout-icon">💡</span><div class="callout-body"><strong>Best for any framework</strong> Maximum control over when and how context is injected.</div></div>
+      <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="cm"># before your LLM call</span>
+<span class="df">ctx</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">context</span>(<span class="st">"alice"</span>, <span class="df">message</span>)   <span class="cm"># structured bullets</span>
+<span class="df">ctx</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">persona</span>(<span class="st">"alice"</span>, <span class="df">message</span>)   <span class="cm"># natural-language paragraph</span>
+
+<span class="cm"># async variants</span>
+<span class="df">ctx</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">piq</span>.<span class="fn">acontext</span>(<span class="st">"alice"</span>, <span class="df">message</span>)
+<span class="df">ctx</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">piq</span>.<span class="fn">apersona</span>(<span class="st">"alice"</span>, <span class="df">message</span>)
+
+<span class="df">system</span> <span class="op">=</span> <span class="st">f"</span><span class="df">{ctx}</span><span class="st">\n</span><span class="df">{base}</span><span class="st">"</span> <span class="kw">if</span> <span class="df">ctx</span> <span class="kw">else</span> <span class="df">base</span>
+
+<span class="cm"># after your LLM call</span>
+<span class="kw">await</span> <span class="df">piq</span>.<span class="fn">learn</span>(<span class="st">"alice"</span>, <span class="df">messages</span>)</code></pre></div>
+    </div>
+    <div class="tab-panel" id="t-inj">
+      <div class="callout info" style="margin-top:14px"><span class="callout-icon">💡</span><div class="callout-body"><strong>Best for OpenAI-style message lists</strong> No system prompt construction needed.</div></div>
+      <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="cm"># finds the first system message and prepends context</span>
+<span class="cm"># inserts a new system message at [0] if none exists</span>
+<span class="df">messages</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">inject</span>(<span class="df">messages</span>, <span class="at">user_id</span><span class="op">=</span><span class="st">"alice"</span>, <span class="at">query</span><span class="op">=</span><span class="df">message</span>)
+<span class="df">response</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">llm</span>.<span class="fn">ainvoke</span>(<span class="df">messages</span>)</code></pre></div>
+    </div>
+    <div class="tab-panel" id="t-mem">
+      <div class="cw" style="margin-top:14px"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="cm"># inspect all memories</span>
+<span class="kw">for</span> <span class="df">m</span> <span class="kw">in</span> <span class="df">piq</span>.<span class="fn">memories</span>(<span class="st">"alice"</span>):
+    <span class="fn">print</span>(<span class="st">f"[</span><span class="df">{m.category:12}</span><span class="st">] </span><span class="df">{m.content}</span><span class="st"> (</span><span class="df">{m.importance_score:.2f}</span><span class="st">)"</span>)
+
+<span class="cm"># filter by category</span>
+<span class="df">goals</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">memories</span>(<span class="st">"alice"</span>, <span class="at">category</span><span class="op">=</span><span class="st">"goal"</span>)
+<span class="df">tech</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">memories</span>(<span class="st">"alice"</span>, <span class="at">category</span><span class="op">=</span><span class="st">"technical"</span>)
+
+<span class="cm"># GDPR delete</span>
+<span class="df">deleted</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">forget</span>(<span class="st">"alice"</span>)
+<span class="df">count</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">count</span>(<span class="st">"alice"</span>)</code></pre></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Context modes ── -->
+<section class="section" id="context-modes">
+  <h2>Context modes</h2>
+  <p>Two output formats. Set once on the adapter or override per call.</p>
+  <div class="tabs">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="tab(this,'m-ctx')">context</button>
+      <button class="tab-btn" onclick="tab(this,'m-per')">persona</button>
+    </div>
+    <div class="tab-panel active" id="m-ctx">
+      <p style="margin-top:12px;font-size:.875rem">Structured bullet list. Best for dashboards, technical assistants, recommendation engines.</p>
+      <div class="cw"><pre><div class="pre-header"><span class="pre-lang">output</span></div><code>[personiq: what I know about this user]
+
+Technical background:
+  • User is an experienced Go developer
+  • User works with PostgreSQL and Redis
+
+Goals:
+  • User is building a distributed payment service
+
+[end of personiq context]</code></pre></div>
+    </div>
+    <div class="tab-panel" id="m-per">
+      <p style="margin-top:12px;font-size:.875rem">Natural-language paragraph. Best for conversational chatbots - the assistant responds naturally without reciting a database.</p>
+      <div class="cw"><pre><div class="pre-header"><span class="pre-lang">output</span></div><code>You already know this user. Here is what you know about them:
+They work with Go and PostgreSQL. They're currently focused on building
+a distributed payment service. They prefer concise, direct answers.
+Use this naturally don't recite it back, just let it shape your response.</code></pre></div>
+    </div>
+  </div>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="cm"># set globally</span>
+<span class="df">piq</span> <span class="op">=</span> <span class="tp">PersoniqAdapter</span>(<span class="at">llm</span><span class="op">=</span><span class="df">llm</span>, <span class="at">mode</span><span class="op">=</span><span class="st">"persona"</span>)
+
+<span class="cm"># override per call - these always use their own format</span>
+<span class="df">ctx</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">context</span>(<span class="df">user_id</span>, <span class="df">query</span>)   <span class="cm"># always bullets</span>
+<span class="df">ctx</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">persona</span>(<span class="df">user_id</span>, <span class="df">query</span>)   <span class="cm"># always natural language</span></code></pre></div>
+</section>
+
+<!-- ── LangGraph ── -->
+<section class="section" id="langgraph">
+  <h2>LangGraph</h2>
+  <p>Two nodes wired before and after your chat node. <code>PersoniqState</code> extends <code>MessagesState</code> and adds <code>user_id</code> and <code>memory_context</code> fields.</p>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="kw">from</span> <span class="df">langchain_groq</span> <span class="kw">import</span> <span class="tp">ChatGroq</span>
+<span class="kw">from</span> <span class="df">langchain_core.messages</span> <span class="kw">import</span> <span class="tp">HumanMessage</span>, <span class="tp">SystemMessage</span>
+<span class="kw">from</span> <span class="df">langgraph.graph</span> <span class="kw">import</span> <span class="tp">END</span>, <span class="tp">StateGraph</span>
+<span class="kw">from</span> <span class="df">personiq</span> <span class="kw">import</span> <span class="tp">PersoniqAdapter</span>, <span class="tp">PersoniqState</span>
+
+<span class="df">llm</span> <span class="op">=</span> <span class="tp">ChatGroq</span>(<span class="at">model</span><span class="op">=</span><span class="st">"llama-3.1-8b-instant"</span>)
+<span class="df">piq</span> <span class="op">=</span> <span class="tp">PersoniqAdapter</span>(<span class="at">llm</span><span class="op">=</span><span class="df">llm</span>, <span class="at">mode</span><span class="op">=</span><span class="st">"persona"</span>)
+
+<span class="kw">async def</span> <span class="fn">chat</span>(<span class="df">state</span><span class="op">:</span> <span class="tp">PersoniqState</span>) <span class="op">-></span> <span class="tp">dict</span>:
+    <span class="df">ctx</span> <span class="op">=</span> <span class="df">state</span>.<span class="fn">get</span>(<span class="st">"memory_context"</span>, <span class="st">""</span>)
+    <span class="df">system</span> <span class="op">=</span> <span class="st">f"</span><span class="df">{ctx}</span><span class="st">\nYou are a helpful assistant."</span> <span class="kw">if</span> <span class="df">ctx</span> <span class="kw">else</span> <span class="st">"You are a helpful assistant."</span>
+    <span class="df">msgs</span> <span class="op">=</span> [<span class="tp">SystemMessage</span>(<span class="at">content</span><span class="op">=</span><span class="df">system</span>)] <span class="op">+</span> <span class="fn">list</span>(<span class="df">state</span>[<span class="st">"messages"</span>])
+    <span class="df">resp</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">llm</span>.<span class="fn">ainvoke</span>(<span class="df">msgs</span>)
+    <span class="kw">return</span> {<span class="st">"messages"</span><span class="op">:</span> [<span class="df">resp</span>]}
+
+<span class="df">builder</span> <span class="op">=</span> <span class="tp">StateGraph</span>(<span class="tp">PersoniqState</span>)
+<span class="df">builder</span>.<span class="fn">add_node</span>(<span class="st">"personiq_load"</span>, <span class="df">piq</span>.<span class="df">load_node</span>)
+<span class="df">builder</span>.<span class="fn">add_node</span>(<span class="st">"chat"</span>, <span class="df">chat</span>)
+<span class="df">builder</span>.<span class="fn">add_node</span>(<span class="st">"personiq_save"</span>, <span class="df">piq</span>.<span class="df">save_node</span>)
+<span class="df">builder</span>.<span class="fn">set_entry_point</span>(<span class="st">"personiq_load"</span>)
+<span class="df">builder</span>.<span class="fn">add_edge</span>(<span class="st">"personiq_load"</span>, <span class="st">"chat"</span>)
+<span class="df">builder</span>.<span class="fn">add_edge</span>(<span class="st">"chat"</span>, <span class="st">"personiq_save"</span>)
+<span class="df">builder</span>.<span class="fn">add_edge</span>(<span class="st">"personiq_save"</span>, <span class="tp">END</span>)
+<span class="df">graph</span> <span class="op">=</span> <span class="df">builder</span>.<span class="fn">compile</span>()
+
+<span class="df">result</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">graph</span>.<span class="fn">ainvoke</span>({
+    <span class="st">"user_id"</span><span class="op">:</span> <span class="st">"alice"</span>,
+    <span class="st">"messages"</span><span class="op">:</span> [<span class="tp">HumanMessage</span>(<span class="at">content</span><span class="op">=</span><span class="st">"I'm a backend engineer using Go."</span>)],
+})</code></pre></div>
+</section>
+
+<!-- ── LangChain ── -->
+<section class="section" id="langchain">
+  <h2>LangChain / LCEL</h2>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="kw">from</span> <span class="df">langchain_openai</span> <span class="kw">import</span> <span class="tp">ChatOpenAI</span>
+<span class="kw">from</span> <span class="df">langchain_core.prompts</span> <span class="kw">import</span> <span class="tp">ChatPromptTemplate</span>
+<span class="kw">from</span> <span class="df">langchain_core.output_parsers</span> <span class="kw">import</span> <span class="tp">StrOutputParser</span>
+<span class="kw">from</span> <span class="df">personiq</span> <span class="kw">import</span> <span class="tp">PersoniqAdapter</span>
+
+<span class="df">llm</span> <span class="op">=</span> <span class="tp">ChatOpenAI</span>(<span class="at">model</span><span class="op">=</span><span class="st">"gpt-4o-mini"</span>)
+<span class="df">piq</span> <span class="op">=</span> <span class="tp">PersoniqAdapter</span>(<span class="at">llm</span><span class="op">=</span><span class="df">llm</span>)
+<span class="df">chain</span> <span class="op">=</span> <span class="tp">ChatPromptTemplate</span>.<span class="fn">from_messages</span>([
+    (<span class="st">"system"</span>, <span class="st">"{system}"</span>),
+    (<span class="st">"human"</span>, <span class="st">"{input}"</span>),
+]) <span class="op">|</span> <span class="df">llm</span> <span class="op">|</span> <span class="tp">StrOutputParser</span>()
+
+<span class="kw">async def</span> <span class="fn">ask</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">question</span><span class="op">:</span> <span class="tp">str</span>) <span class="op">-></span> <span class="tp">str</span>:
+    <span class="df">ctx</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">persona</span>(<span class="df">user_id</span>, <span class="df">question</span>)
+    <span class="df">system</span> <span class="op">=</span> <span class="st">f"</span><span class="df">{ctx}</span><span class="st">\nYou are a helpful assistant."</span> <span class="kw">if</span> <span class="df">ctx</span> <span class="kw">else</span> <span class="st">"You are a helpful assistant."</span>
+    <span class="df">answer</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">chain</span>.<span class="fn">ainvoke</span>({<span class="st">"system"</span><span class="op">:</span> <span class="df">system</span>, <span class="st">"input"</span><span class="op">:</span> <span class="df">question</span>})
+    <span class="kw">await</span> <span class="df">piq</span>.<span class="fn">learn</span>(<span class="df">user_id</span>, [<span class="tp">HumanMessage</span>(<span class="at">content</span><span class="op">=</span><span class="df">question</span>)])
+    <span class="kw">return</span> <span class="df">answer</span></code></pre></div>
+</section>
+
+<!-- ── FastAPI ── -->
+<section class="section" id="fastapi">
+  <h2>FastAPI</h2>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="kw">from</span> <span class="df">fastapi</span> <span class="kw">import</span> <span class="tp">FastAPI</span>
+<span class="kw">from</span> <span class="df">pydantic</span> <span class="kw">import</span> <span class="tp">BaseModel</span>
+<span class="kw">from</span> <span class="df">langchain_openai</span> <span class="kw">import</span> <span class="tp">ChatOpenAI</span>
+<span class="kw">from</span> <span class="df">langchain_core.messages</span> <span class="kw">import</span> <span class="tp">HumanMessage</span>, <span class="tp">SystemMessage</span>
+<span class="kw">from</span> <span class="df">personiq</span> <span class="kw">import</span> <span class="tp">PersoniqAdapter</span>
+
+<span class="df">app</span> <span class="op">=</span> <span class="tp">FastAPI</span>()
+<span class="df">piq</span> <span class="op">=</span> <span class="tp">PersoniqAdapter</span>(<span class="at">llm</span><span class="op">=</span><span class="tp">ChatOpenAI</span>(<span class="at">model</span><span class="op">=</span><span class="st">"gpt-4o-mini"</span>), <span class="at">mode</span><span class="op">=</span><span class="st">"persona"</span>)
+
+<span class="kw">class</span> <span class="tp">ChatReq</span>(<span class="tp">BaseModel</span>):
+    <span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>
+    <span class="df">message</span><span class="op">:</span> <span class="tp">str</span>
+
+<span class="at">@app</span>.<span class="fn">post</span>(<span class="st">"/chat"</span>)
+<span class="kw">async def</span> <span class="fn">chat</span>(<span class="df">req</span><span class="op">:</span> <span class="tp">ChatReq</span>):
+    <span class="df">ctx</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">piq</span>.<span class="fn">apersona</span>(<span class="df">req</span>.<span class="df">user_id</span>, <span class="df">req</span>.<span class="df">message</span>)
+    <span class="df">system</span> <span class="op">=</span> <span class="st">f"</span><span class="df">{ctx}</span><span class="st">\nYou are a helpful assistant."</span> <span class="kw">if</span> <span class="df">ctx</span> <span class="kw">else</span> <span class="st">"You are a helpful assistant."</span>
+    <span class="df">msgs</span> <span class="op">=</span> [<span class="tp">SystemMessage</span>(<span class="at">content</span><span class="op">=</span><span class="df">system</span>), <span class="tp">HumanMessage</span>(<span class="at">content</span><span class="op">=</span><span class="df">req</span>.<span class="df">message</span>)]
+    <span class="df">resp</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">piq</span>.<span class="df">_llm</span>.<span class="fn">ainvoke</span>(<span class="df">msgs</span>)
+    <span class="kw">await</span> <span class="df">piq</span>.<span class="fn">learn</span>(<span class="df">req</span>.<span class="df">user_id</span>, <span class="df">msgs</span> <span class="op">+</span> [<span class="df">resp</span>])
+    <span class="kw">return</span> {<span class="st">"reply"</span><span class="op">:</span> <span class="df">resp</span>.<span class="df">content</span>}
+
+<span class="at">@app</span>.<span class="fn">delete</span>(<span class="st">"/users/{user_id}/memories"</span>)
+<span class="kw">async def</span> <span class="fn">forget</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>):
+    <span class="kw">return</span> {<span class="st">"deleted"</span><span class="op">:</span> <span class="df">piq</span>.<span class="fn">forget</span>(<span class="df">user_id</span>)}</code></pre></div>
+</section>
+
+<!-- ── OpenAI ── -->
+<section class="section" id="openai">
+  <h2>OpenAI SDK (direct)</h2>
+  <p>Use <code>inject()</code> to work with the raw OpenAI message format without constructing a system prompt manually.</p>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="kw">import</span> <span class="df">openai</span>
+<span class="kw">from</span> <span class="df">langchain_openai</span> <span class="kw">import</span> <span class="tp">ChatOpenAI</span>
+<span class="kw">from</span> <span class="df">personiq</span> <span class="kw">import</span> <span class="tp">PersoniqAdapter</span>
+
+<span class="df">client</span> <span class="op">=</span> <span class="df">openai</span>.<span class="tp">AsyncOpenAI</span>()
+<span class="df">piq</span> <span class="op">=</span> <span class="tp">PersoniqAdapter</span>(<span class="at">llm</span><span class="op">=</span><span class="tp">ChatOpenAI</span>(<span class="at">model</span><span class="op">=</span><span class="st">"gpt-4o-mini"</span>))
+
+<span class="kw">async def</span> <span class="fn">chat</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">text</span><span class="op">:</span> <span class="tp">str</span>):
+    <span class="df">messages</span> <span class="op">=</span> [
+        {<span class="st">"role"</span><span class="op">:</span> <span class="st">"system"</span>, <span class="st">"content"</span><span class="op">:</span> <span class="st">"You are a helpful assistant."</span>},
+        {<span class="st">"role"</span><span class="op">:</span> <span class="st">"user"</span>, <span class="st">"content"</span><span class="op">:</span> <span class="df">text</span>},
+    ]
+    <span class="cm"># inject() finds the system message and prepends context</span>
+    <span class="df">messages</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">inject</span>(<span class="df">messages</span>, <span class="at">user_id</span><span class="op">=</span><span class="df">user_id</span>, <span class="at">query</span><span class="op">=</span><span class="df">text</span>)
+    <span class="df">resp</span> <span class="op">=</span> <span class="kw">await</span> <span class="df">client</span>.<span class="df">chat</span>.<span class="df">completions</span>.<span class="fn">create</span>(<span class="at">model</span><span class="op">=</span><span class="st">"gpt-4o-mini"</span>, <span class="at">messages</span><span class="op">=</span><span class="df">messages</span>)
+    <span class="kw">return</span> <span class="df">resp</span>.<span class="df">choices</span>[<span class="nu">0</span>].<span class="df">message</span>.<span class="df">content</span></code></pre></div>
+</section>
+
+<!-- ── Ollama ── -->
+<section class="section" id="ollama">
+  <h2>Ollama</h2>
+  <p>Fully local, no API key. Memory extraction and embeddings run entirely on-device.</p>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">bash</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code>pip install personiq[ollama]
+ollama pull llama3.2</code></pre></div>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="kw">from</span> <span class="df">langchain_ollama</span> <span class="kw">import</span> <span class="tp">ChatOllama</span>
+<span class="kw">from</span> <span class="df">personiq</span> <span class="kw">import</span> <span class="tp">PersoniqAdapter</span>
+
+<span class="df">piq</span> <span class="op">=</span> <span class="tp">PersoniqAdapter</span>(<span class="at">llm</span><span class="op">=</span><span class="tp">ChatOllama</span>(<span class="at">model</span><span class="op">=</span><span class="st">"llama3.2"</span>))
+
+<span class="cm"># identical API to all other providers</span>
+<span class="df">ctx</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">persona</span>(<span class="st">"alice"</span>, <span class="df">message</span>)
+<span class="kw">await</span> <span class="df">piq</span>.<span class="fn">learn</span>(<span class="st">"alice"</span>, <span class="df">messages</span>)</code></pre></div>
+  <div class="callout tip"><span class="callout-icon">✦</span><div class="callout-body">Embeddings use <code>all-MiniLM-L6-v2</code> from sentence-transformers by default, no network calls required.</div></div>
+</section>
+
+<!-- ── API Reference ── -->
+<section class="section" id="api">
+  <h2>PersoniqAdapter</h2>
+  <p>The primary class. Instantiate once per application; share across all users.</p>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="tp">PersoniqAdapter</span>(<span class="df">llm</span>, <span class="df">config</span><span class="op">=</span><span class="kw">None</span>, <span class="df">mode</span><span class="op">=</span><span class="st">"context"</span>, <span class="df">user_id_key</span><span class="op">=</span><span class="st">"user_id"</span>)</div>
+    <div class="mc-body">
+      <div class="mc-desc">Personalization memory adapter. One instance per application, shared across all users.</div>
+      <div class="mc-params">
+        <div class="param-row"><div class="param-name">llm</div><div class="param-desc">Any LangChain <code>BaseChatModel</code>. Used for memory extraction and optional query expansion.</div></div>
+        <div class="param-row"><div class="param-name">config</div><div class="param-desc">Optional <code>PersoniqConfig</code>. Sensible defaults applied if omitted.</div></div>
+        <div class="param-row"><div class="param-name">mode</div><div class="param-desc"><code>"context"</code> for structured bullets, <code>"persona"</code> for natural language. Can be overridden per call.</div></div>
+        <div class="param-row"><div class="param-name">user_id_key</div><div class="param-desc">LangGraph state key holding the user ID. Default: <code>"user_id"</code>.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Context retrieval</h3>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="df">piq</span>.<span class="fn">context</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">query</span><span class="op">:</span> <span class="tp">str</span>) <span class="op">→</span> <span class="tp">str</span></div>
+    <div class="mc-body"><div class="mc-desc">Retrieve personalization context as a structured bullet list. Returns <code>""</code> when no memories exist, safe to prepend unconditionally. Synchronous.</div></div>
+  </div>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="df">piq</span>.<span class="fn">persona</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">query</span><span class="op">:</span> <span class="tp">str</span>) <span class="op">→</span> <span class="tp">str</span></div>
+    <div class="mc-body"><div class="mc-desc">Retrieve context as a natural-language persona paragraph. Better for conversational chatbots. Synchronous.</div></div>
+  </div>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="kw">await</span> <span class="df">piq</span>.<span class="fn">acontext</span>(<span class="df">user_id</span>, <span class="df">query</span>) <span class="op">→</span> <span class="tp">str</span>  <span class="cm"># async variant of context()</span><br/><span class="kw">await</span> <span class="df">piq</span>.<span class="fn">apersona</span>(<span class="df">user_id</span>, <span class="df">query</span>) <span class="op">→</span> <span class="tp">str</span>  <span class="cm"># async variant of persona()</span></div>
+    <div class="mc-body"><div class="mc-desc">Async variants. Prefer these in async applications.</div></div>
+  </div>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="df">piq</span>.<span class="fn">inject</span>(<span class="df">messages</span><span class="op">:</span> <span class="tp">list</span>[<span class="tp">dict</span>], <span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">query</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">mode</span><span class="op">=</span><span class="kw">None</span>) <span class="op">→</span> <span class="tp">list</span>[<span class="tp">dict</span>]</div>
+    <div class="mc-body"><div class="mc-desc">Inject context into an OpenAI-style messages list. Finds the first system message and prepends context; inserts a new system message at index 0 if none exists.</div></div>
+  </div>
+
+  <h3>Memory extraction</h3>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="kw">await</span> <span class="df">piq</span>.<span class="fn">learn</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">messages</span><span class="op">:</span> <span class="tp">list</span>[<span class="tp">BaseMessage</span>]) <span class="op">→</span> <span class="tp">int</span></div>
+    <div class="mc-body"><div class="mc-desc">Extract and store new memories from a conversation turn. Call after each assistant response. Pass the full conversation history for best results. Returns number of new memories (0 when <code>async_extraction=True</code>).</div></div>
+  </div>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="df">piq</span>.<span class="fn">learn_sync</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">messages</span><span class="op">:</span> <span class="tp">list</span>[<span class="tp">BaseMessage</span>]) <span class="op">→</span> <span class="tp">int</span></div>
+    <div class="mc-body"><div class="mc-desc">Synchronous version of <code>learn()</code>. Blocks until extraction completes. Use only when async is unavailable.</div></div>
+  </div>
+
+  <h3>LangGraph nodes</h3>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="df">piq</span>.<span class="df">load_node</span>  <span class="cm"># async callable</span></div>
+    <div class="mc-body"><div class="mc-desc">Reads <code>state[user_id_key]</code> and <code>state["messages"]</code>. Writes retrieved context to <code>state["memory_context"]</code>. Attach before your chat node.</div></div>
+  </div>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="df">piq</span>.<span class="df">save_node</span>  <span class="cm"># async callable</span></div>
+    <div class="mc-body"><div class="mc-desc">Extracts and saves new memories fire-and-forget. Never blocks the response path. Attach after your chat node.</div></div>
+  </div>
+
+  <h3>Memory management</h3>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="df">piq</span>.<span class="fn">memories</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>, <span class="df">category</span><span class="op">=</span><span class="kw">None</span>) <span class="op">→</span> <span class="tp">list</span>[<span class="tp">Memory</span>]</div>
+    <div class="mc-body"><div class="mc-desc">List stored memories sorted by importance. Optional <code>category</code> filter: <code>"preference"</code>, <code>"goal"</code>, <code>"technical"</code>, <code>"context"</code>, <code>"style"</code>, <code>"personal"</code>.</div></div>
+  </div>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="df">piq</span>.<span class="fn">forget</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>) <span class="op">→</span> <span class="tp">int</span></div>
+    <div class="mc-body"><div class="mc-desc">Delete all memories for a user. Returns number of deleted records. Use for GDPR compliance or account deletion.</div></div>
+  </div>
+
+  <div class="mc">
+    <div class="mc-sig"><span class="df">piq</span>.<span class="fn">count</span>(<span class="df">user_id</span><span class="op">:</span> <span class="tp">str</span>) <span class="op">→</span> <span class="tp">int</span></div>
+    <div class="mc-body"><div class="mc-desc">Return total number of stored memories for a user.</div></div>
+  </div>
+</section>
+
+<!-- ── Config ── -->
+<section class="section" id="config">
+  <h2>PersoniqConfig</h2>
+  <p>All settings in one dataclass. Every field can also be set via a <code>PERSONIQ_*</code> environment variable.</p>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="kw">from</span> <span class="df">personiq</span> <span class="kw">import</span> <span class="tp">PersoniqConfig</span>
+
+<span class="df">config</span> <span class="op">=</span> <span class="tp">PersoniqConfig</span>(
+    <span class="at">db_path</span><span class="op">=</span><span class="st">"./myapp.db"</span>,            <span class="cm"># SQLite file path</span>
+    <span class="at">embedding_backend</span><span class="op">=</span><span class="st">"local"</span>,       <span class="cm"># "local" | "openai"</span>
+    <span class="at">embedding_model</span><span class="op">=</span><span class="st">"all-MiniLM-L6-v2"</span>,
+    <span class="at">top_k</span><span class="op">=</span><span class="nu">5</span>,                          <span class="cm"># memories returned per query</span>
+    <span class="at">similarity_threshold</span><span class="op">=</span><span class="nu">0.20</span>,        <span class="cm"># minimum score to include</span>
+    <span class="at">semantic_weight</span><span class="op">=</span><span class="nu">0.60</span>,             <span class="cm"># hybrid search weights</span>
+    <span class="at">bm25_weight</span><span class="op">=</span><span class="nu">0.30</span>,
+    <span class="at">recency_weight</span><span class="op">=</span><span class="nu">0.10</span>,
+    <span class="at">dedup_threshold</span><span class="op">=</span><span class="nu">0.85</span>,             <span class="cm"># deduplicate above this similarity</span>
+    <span class="at">merge_threshold</span><span class="op">=</span><span class="nu">0.72</span>,             <span class="cm"># merge near-duplicates</span>
+    <span class="at">decay_rate</span><span class="op">=</span><span class="nu">0.005</span>,                 <span class="cm"># memory decay per day</span>
+    <span class="at">async_extraction</span><span class="op">=</span><span class="kw">True</span>,            <span class="cm"># fire-and-forget learn()</span>
+    <span class="at">context_window_turns</span><span class="op">=</span><span class="nu">6</span>,           <span class="cm"># conversation turns analysed</span>
+    <span class="at">max_context_chars</span><span class="op">=</span><span class="nu">1500</span>,           <span class="cm"># max chars injected into prompt</span>
+    <span class="at">debug</span><span class="op">=</span><span class="kw">False</span>,
+)
+<span class="df">piq</span> <span class="op">=</span> <span class="tp">PersoniqAdapter</span>(<span class="at">llm</span><span class="op">=</span><span class="df">llm</span>, <span class="at">config</span><span class="op">=</span><span class="df">config</span>)</code></pre></div>
+</section>
+
+<!-- ── Data models ── -->
+<section class="section" id="models">
+  <h2>Data models</h2>
+  <h3>Memory</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td><code>str</code></td><td>UUID4</td></tr>
+      <tr><td><code>user_id</code></td><td><code>str</code></td><td>User identifier</td></tr>
+      <tr><td><code>content</code></td><td><code>str</code></td><td>The stored fact</td></tr>
+      <tr><td><code>category</code></td><td><code>MemoryCategory</code></td><td>One of six categories</td></tr>
+      <tr><td><code>confidence</code></td><td><code>float 0–1</code></td><td>LLM extraction confidence</td></tr>
+      <tr><td><code>importance_score</code></td><td><code>float</code></td><td>confidence × decay × access signal</td></tr>
+      <tr><td><code>access_count</code></td><td><code>int</code></td><td>Times this memory was retrieved</td></tr>
+      <tr><td><code>decay_factor</code></td><td><code>float 0–1</code></td><td>Recency decay multiplier</td></tr>
+      <tr><td><code>created_at</code></td><td><code>datetime</code></td><td>UTC creation time</td></tr>
+      <tr><td><code>updated_at</code></td><td><code>datetime</code></td><td>UTC last update time</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>MemoryCategory</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Value</th><th>Retrieval boost</th><th>What gets stored</th></tr></thead>
+    <tbody>
+      <tr><td><code>technical</code></td><td>×1.20</td><td>Languages, frameworks, tools, platforms</td></tr>
+      <tr><td><code>goal</code></td><td>×1.15</td><td>Objectives, projects, problems to solve</td></tr>
+      <tr><td><code>preference</code></td><td>×1.10</td><td>Likes, dislikes, favourites</td></tr>
+      <tr><td><code>context</code></td><td>×1.05</td><td>Occupation, location, life stage</td></tr>
+      <tr><td><code>personal</code></td><td>×1.00</td><td>Name, relationships, values</td></tr>
+      <tr><td><code>style</code></td><td>×0.90</td><td>Communication style, tone preference</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>HybridSearchResult</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>memory</code></td><td><code>Memory</code></td><td>The matched memory object</td></tr>
+      <tr><td><code>semantic_score</code></td><td><code>float</code></td><td>Cosine similarity score</td></tr>
+      <tr><td><code>bm25_score</code></td><td><code>float</code></td><td>BM25 keyword match score</td></tr>
+      <tr><td><code>recency_score</code></td><td><code>float</code></td><td>Recency decay factor</td></tr>
+      <tr><td><code>final_score</code></td><td><code>float</code></td><td>RRF-fused composite score</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ── Env vars ── -->
+<section class="section" id="env">
+  <h2>Environment variables</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>PERSONIQ_DB_PATH</code></td><td><code>~/.personiq/personiq.db</code></td><td>SQLite database path</td></tr>
+      <tr><td><code>PERSONIQ_EMBEDDING_BACKEND</code></td><td><code>local</code></td><td><code>local</code> or <code>openai</code></td></tr>
+      <tr><td><code>PERSONIQ_EMBEDDING_MODEL</code></td><td><code>all-MiniLM-L6-v2</code></td><td>sentence-transformers model</td></tr>
+      <tr><td><code>PERSONIQ_TOP_K</code></td><td><code>5</code></td><td>Memories returned per query</td></tr>
+      <tr><td><code>PERSONIQ_SIMILARITY_THRESHOLD</code></td><td><code>0.20</code></td><td>Minimum relevance score</td></tr>
+      <tr><td><code>PERSONIQ_SEMANTIC_WEIGHT</code></td><td><code>0.60</code></td><td>Semantic search weight</td></tr>
+      <tr><td><code>PERSONIQ_BM25_WEIGHT</code></td><td><code>0.30</code></td><td>BM25 keyword weight</td></tr>
+      <tr><td><code>PERSONIQ_RECENCY_WEIGHT</code></td><td><code>0.10</code></td><td>Recency decay weight</td></tr>
+      <tr><td><code>PERSONIQ_DEDUP_THRESHOLD</code></td><td><code>0.85</code></td><td>Deduplication cutoff</td></tr>
+      <tr><td><code>PERSONIQ_ASYNC_EXTRACTION</code></td><td><code>true</code></td><td>Fire-and-forget <code>learn()</code></td></tr>
+      <tr><td><code>PERSONIQ_CONTEXT_WINDOW</code></td><td><code>6</code></td><td>Conversation turns analysed</td></tr>
+      <tr><td><code>PERSONIQ_DEBUG</code></td><td>-</td><td>Set <code>1</code> to enable debug logs</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ── Memory management ── -->
+<section class="section" id="memory-mgmt">
+  <h2>Memory management</h2>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="cm"># inspect all memories</span>
+<span class="kw">for</span> <span class="df">m</span> <span class="kw">in</span> <span class="df">piq</span>.<span class="fn">memories</span>(<span class="st">"alice"</span>):
+    <span class="fn">print</span>(<span class="st">f"[</span><span class="df">{m.category:12}</span><span class="st">] </span><span class="df">{m.content}</span><span class="st"> (</span><span class="df">{m.importance_score:.2f}</span><span class="st">)"</span>)
+
+<span class="cm"># filter by category</span>
+<span class="df">goals</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">memories</span>(<span class="st">"alice"</span>, <span class="at">category</span><span class="op">=</span><span class="st">"goal"</span>)
+<span class="df">tech</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">memories</span>(<span class="st">"alice"</span>, <span class="at">category</span><span class="op">=</span><span class="st">"technical"</span>)
+<span class="fn">print</span>(<span class="st">f"</span><span class="df">{piq.count('alice')}</span><span class="st"> memories stored"</span>)
+
+<span class="cm"># GDPR / account deletion</span>
+<span class="df">deleted</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">forget</span>(<span class="st">"alice"</span>)
+<span class="fn">print</span>(<span class="st">f"Deleted </span><span class="df">{deleted}</span><span class="st"> memories"</span>)</code></pre></div>
+</section>
+
+<!-- ── Providers ── -->
+<section class="section" id="providers">
+  <h2>LLM providers</h2>
+  <p>Any <code>BaseChatModel</code> from LangChain works. Install the matching extra and pass the model instance to the adapter.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Provider</th><th>Install extra</th><th>Import</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Groq</strong></td><td><code>personiq[groq]</code></td><td><code>from langchain_groq import ChatGroq</code></td></tr>
+      <tr><td><strong>OpenAI</strong></td><td><code>personiq[openai]</code></td><td><code>from langchain_openai import ChatOpenAI</code></td></tr>
+      <tr><td><strong>Anthropic</strong></td><td><code>personiq[anthropic]</code></td><td><code>from langchain_anthropic import ChatAnthropic</code></td></tr>
+      <tr><td><strong>Ollama</strong></td><td><code>personiq[ollama]</code></td><td><code>from langchain_ollama import ChatOllama</code></td></tr>
+      <tr><td><strong>Mistral</strong></td><td><code>personiq[mistral]</code></td><td><code>from langchain_mistralai import ChatMistralAI</code></td></tr>
+      <tr><td><strong>HuggingFace</strong></td><td><code>personiq[huggingface]</code></td><td><code>from langchain_huggingface import ChatHuggingFace</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ── Alongside ── -->
+<section class="section" id="alongside">
+  <h2>Works alongside other memory systems</h2>
+  <p>personiq stores data in its own SQLite database and does not interfere with Mem0, Zep, LangMem, or any custom memory setup.</p>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">python</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code><span class="df">piq</span>  <span class="op">=</span> <span class="tp">PersoniqAdapter</span>(<span class="at">llm</span><span class="op">=</span><span class="df">llm</span>)   <span class="cm"># personiq - personalization facts</span>
+<span class="df">mem0</span> <span class="op">=</span> <span class="tp">MemoryClient</span>(...)            <span class="cm"># Mem0 - conversation history</span>
+
+<span class="cm"># both work independently on the same conversation</span>
+<span class="df">ctx</span> <span class="op">=</span> <span class="df">piq</span>.<span class="fn">persona</span>(<span class="st">"alice"</span>, <span class="df">message</span>)
+<span class="df">hist</span> <span class="op">=</span> <span class="df">mem0</span>.<span class="fn">get_history</span>(<span class="st">"alice"</span>)</code></pre></div>
+  <div class="callout info"><span class="callout-icon">💡</span><div class="callout-body">personiq focuses on <em>personalization</em> - durable user facts. Tools like Mem0 and Zep handle conversation history. They serve complementary purposes and work together without conflict.</div></div>
+</section>
+
+<!-- ── Community ── -->
+<section class="section" id="community">
+  <h2>Community</h2>
+  <div class="cgrid">
+    <div class="ccard">
+      <div class="ccard-head">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        GitHub
+      </div>
+      <p>Source code, issues, and pull requests.</p>
+      <a href="https://github.com/ashwinibhardwaj/personiq" target="_blank" rel="noopener">github.com/ashwinibhardwaj/personiq →</a>
+    </div>
+    <div class="ccard">
+      <div class="ccard-head">
+        <svg width="15" height="15" fill="#5865F2" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        Discord
+      </div>
+      <p>Ask questions, share what you build.</p>
+      <a href="https://discord.gg/your-server" target="_blank" rel="noopener">Join the server →</a>
+    </div>
+    <div class="ccard">
+      <div class="ccard-head">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        PyPI
+      </div>
+      <p>Stable releases and changelogs.</p>
+      <a href="https://pypi.org/project/personiq/" target="_blank" rel="noopener">pypi.org/project/personiq →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Contributing ── -->
+<section class="section" id="contributing">
+  <h2>Contributing</h2>
+  <p>Contributions are welcome. Clone and install dev dependencies:</p>
+  <div class="cw"><pre><div class="pre-header"><span class="pre-lang">bash</span><button class="pre-copy" onclick="cp(this)">copy</button></div><code>git clone https://github.com/ashwinibhardwaj/personiq
+cd personiq
+pip install -e ".[dev]"
+
+<span class="cm"># run tests - all LLM calls are mocked, no API key needed</span>
+pytest tests/ -v
+
+<span class="cm"># lint</span>
+ruff check .</code></pre></div>
+  <div class="callout tip"><span class="callout-icon">✦</span><div class="callout-body"><strong>No API key needed for tests.</strong> All LLM calls are mocked via pytest-mock. The full suite runs locally with zero external calls.</div></div>
+  <p>Open an issue to discuss a change before submitting a pull request. See <a href="https://github.com/ashwinibhardwaj/personiq/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">CONTRIBUTING.md</a> for the full guide.</p>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <span>personiq &nbsp;·&nbsp; v0.2.0 &nbsp;·&nbsp; MIT License</span>
+  <div style="display:flex;gap:20px;flex-wrap:wrap;">
+    <a href="https://github.com/ashwinibhardwaj/personiq" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://pypi.org/project/personiq/" target="_blank" rel="noopener">PyPI</a>
+    <a href="https://github.com/ashwinibhardwaj/personiq/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+  </div>
+</footer>
+
+<script>
+function tab(btn, id) {
+  const root = btn.closest('.tabs');
+  root.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  root.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+function cp(btn) {
+  // get the <code> inside the same <pre>
+  const code = btn.closest('pre').querySelector('code');
+  // strip HTML tags to get plain text
+  const text = code.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 1800);
+  });
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// Active nav highlight
+const sections = document.querySelectorAll('.section[id]');
+const links = document.querySelectorAll('.sl');
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting)
+      links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+  });
+}, { rootMargin: '-15% 0px -75% 0px' });
+sections.forEach(s => io.observe(s));
+
+links.forEach(l => l.addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('open');
+}));
+</script>
+</body>
+</html>
